@@ -1,0 +1,26 @@
+name: Publish plugins
+on:
+  push:
+    tags: ['plugins-*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Build verified plugin packages
+        run: python scripts/package-market-plugins.py --tag "${{ github.ref_name }}" --output dist
+        if: startsWith(github.ref, 'refs/tags/plugins-')
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/plugins-')
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.zip
+            dist/catalog.json
+            dist/SHA256SUMS
